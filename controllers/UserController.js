@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 
 import UserModel from '../models/User.js';
 import PostModel from "../models/Post.js";
-import {sendRegistrationEmail} from "../mailer.js";
+import {sendRegistrationEmail, sendRegistrationGmail} from "../mailer.js";
 
 export const register = async (req, res) => {
   try {
@@ -22,17 +22,21 @@ export const register = async (req, res) => {
     const user = await doc.save();
 
     const token = jwt.sign(
-      {
-        _id: user._id,
-      },
-      'secret123',
-      {
-        expiresIn: '30d',
-      },
+        {
+          _id: user._id,
+        },
+        'secret123',
+        {
+          expiresIn: '30d',
+        },
     );
 
     const { passwordHash, ...userData } = user._doc;
-    await sendRegistrationEmail(user.email);
+    if (req.body.email.includes('gmail.com')) {
+      await sendRegistrationGmail(req.body.email);
+    } else {
+      await sendRegistrationEmail(req.body.email);
+    }
 
     res.json({
       ...userData,
@@ -66,13 +70,13 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      {
-        _id: user._id,
-      },
-      'secret123',
-      {
-        expiresIn: '30d',
-      },
+        {
+          _id: user._id,
+        },
+        'secret123',
+        {
+          expiresIn: '30d',
+        },
     );
 
     const { passwordHash, ...userData } = user._doc;
@@ -134,4 +138,3 @@ export const getMe = async (req, res) => {
     });
   }
 };
-

@@ -112,6 +112,17 @@ try{
 }
 
 });
+app.post('/send-registration-gmail', async (req, res) => {
+  const { gmail } = req.body;
+  try{
+
+    res.json({ message: 'Письмо отправлено на указанный адрес g-mail' });
+  }catch (err){
+    console.error('Ошибка при отправке письма на почту:', err);
+    res.status(500).json({ message: 'Ошибка при отправке письма' });
+  }
+
+});
 
 
 

@@ -11,6 +11,36 @@ const transporter = nodemailer.createTransport({
         pass: 'mZccNhHb9qY5gSZKT9iQ', //DevProgrammer200
     },
 });
+const transporter2 = nodemailer.createTransport({
+    // Use Gmail SMTP settings
+    service: 'gmail',
+    auth: {
+        user: 'dev.program2175@gmail.com',
+        pass: 'rpjf kvmc vuoh sgnq', // Generate an app password for security
+    },
+});
+
+
+export const sendRegistrationGmail = async (email) => {
+    try {
+        const mailOptions = {
+            from: 'dev.program2175@gmail.com',
+            to: email,
+            subject: 'Registration on Rental Estate Website',
+            text: 'Welcome to Rental Estate!',
+
+            html: '<h1>Welcome to our website!</h1>' +
+                '<h1>Thank you for choosing our company!</h1>',
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('Registration email sent successfully');
+    } catch (error) {
+        console.error('Error sending registration email:', error);
+    }
+};
+
+
 
 export const sendRegistrationEmail = async (email) => {
     try {
