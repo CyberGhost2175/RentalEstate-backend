@@ -103,26 +103,30 @@ export const remove = async (req, res) => {
 
 export const create = async (req, res) => {
   try {
+    console.log('Received post data:', req.body);
     const doc = new PostModel({
       title: req.body.title,
       text: req.body.text,
       imageUrl: req.body.imageUrl,
-      typeOfPost:req.body.typeOfPost,
-      typeOfProperty:req.body.typeOfProperty,
+      typeOfPost: req.body.typeOfPost,
+      typeOfProperty: req.body.typeOfProperty,
       user: req.userId,
-      countOfRooms:req.body.countOfRooms,
-      yearOfConstruction:req.body.yearOfConstruction,
-      totalArea:req.body.totalArea,
-      price:req.body.price,
+      countOfRooms: req.body.countOfRooms,
+      yearOfConstruction: req.body.yearOfConstruction,
+      totalArea: req.body.totalArea,
+      price: req.body.price,
     });
 
+    console.log('Created document:', doc);
     const post = await doc.save();
+    console.log('Saved post:', post);
 
     res.json(post);
   } catch (err) {
-    console.log(err);
+    console.log('Error creating post:', err);
     res.status(500).json({
       message: 'Не удалось создать статью',
+      error: err.message
     });
   }
 };

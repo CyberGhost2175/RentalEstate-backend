@@ -3,8 +3,10 @@ import fs from 'fs';
 import multer from 'multer';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import fetch from 'node-fetch';
 
-
+import dotenv from 'dotenv';
+dotenv.config();
 import { registerValidation, loginValidation, postCreateValidation } from './validations.js';
 
 import { handleValidationErrors, checkAuth } from './utils/index.js';
@@ -15,12 +17,43 @@ import Post from "./models/Post.js";
 import {sendRegistrationEmail} from "./mailer.js";
 
 mongoose
-  .connect('mongodb+srv://Dev:Dev2175@cluster1.yvcic9w.mongodb.net/RentalEstate?retryWrites=true&w=majority\n' +
-      'JW')
+  .connect(process.env.DB_URL)
   .then(() => console.log('DB ok'))
   .catch((err) => console.log('DB error', err));
 
 const app = express();
+
+const client = require('prom-client');
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics(); // CPU, память, uptime и др.
+
+
+const httpRequestDurationMicroseconds = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Длительность HTTP-запроса в секундах',
+  labelNames: ['method', 'route', 'code'],
+  buckets: [0.1, 0.3, 0.5, 0.7, 1, 2, 5] // Варианты длительности
+});
+
+// Middleware для мониторинга
+app.use((req, res, next) => {
+  const end = httpRequestDurationMicroseconds.startTimer();
+  res.on('finish', () => {
+    end({ route: req.route?.path || req.path, code: res.statusCode, method: req.method });
+  });
+  next();
+});
+
+// Отдаем метрики на /metrics
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', client.register.contentType);
+  res.end(await client.register.metrics());
+});
+
+
+
+
+
 
 const storage = multer.diskStorage({
   destination: (_, __, cb) => {
@@ -33,13 +66,97 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
+
+// Function to create default images
+const createDefaultImages = async () => {
+  const defaultImages = [
+    { name: 'apartment1.jpg', url: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267' },
+    { name: 'penthouse1.jpg', url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c' },
+    { name: 'house1.jpg', url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c' },
+    { name: 'default-avatar.jpg', url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde' }
+  ];
+
+  for (const image of defaultImages) {
+    const imagePath = `uploads/${image.name}`;
+    if (!fs.existsSync(imagePath)) {
+      try {
+        const response = await fetch(image.url);
+        const buffer = await response.buffer();
+        fs.writeFileSync(imagePath, buffer);
+        console.log(`Created default image: ${image.name}`);
+      } catch (error) {
+        console.error(`Error creating default image ${image.name}:`, error);
+      }
+    }
+  }
+};
+
 const upload = multer({ storage });
 
 const userCount = await User.countDocuments();
 if (userCount === 0) {
-  // Если нет ни одного пользователя, удаляем все посты
-  await Post.deleteMany();
-  console.log('All posts deleted');
+  // Create default images first
+  await createDefaultImages();
+  
+  // Create a mock user first
+  const mockUser = new User({
+    fullName: 'Demo User',
+    email: 'demo@example.com',
+    phoneNumber: '+1234567890',
+    passwordHash: 'mockpassword',
+    imageUrl: '/uploads/default-avatar.jpg'
+  });
+  await mockUser.save();
+  console.log('Mock user created');
+
+  // Create mock posts
+  const mockPosts = [
+    {
+      title: 'Modern Apartment in City Center',
+      text: 'Beautiful modern apartment located in the heart of the city. Recently renovated with high-quality materials. Features include a fully equipped kitchen, spacious living room, and a cozy bedroom.',
+      typeOfPost: 'Sale',
+      typeOfProperty: 'Flat',
+      viewsCount: 0,
+      price: 250000,
+      countOfRooms: 2,
+      yearOfConstruction: 2015,
+      totalArea: 75,
+      likesCount: 0,
+      user: mockUser._id,
+      imageUrl: '/uploads/apartment1.jpg'
+    },
+    {
+      title: 'Luxury Penthouse with Sea View',
+      text: 'Stunning penthouse with panoramic sea views. Features include a private terrace, modern appliances, and premium finishes throughout. Perfect for those seeking luxury living.',
+      typeOfPost: 'Rent',
+      typeOfProperty: 'Penthouse',
+      viewsCount: 0,
+      price: 5000,
+      countOfRooms: 3,
+      yearOfConstruction: 2020,
+      totalArea: 150,
+      likesCount: 0,
+      user: mockUser._id,
+      imageUrl: '/uploads/penthouse1.jpg'
+    },
+    {
+      title: 'Family House with Garden',
+      text: 'Spacious family house with a beautiful garden. Located in a quiet neighborhood. Features include a large kitchen, multiple bedrooms, and a backyard perfect for family gatherings.',
+      typeOfPost: 'Sale',
+      typeOfProperty: 'House',
+      viewsCount: 0,
+      price: 450000,
+      countOfRooms: 4,
+      yearOfConstruction: 2018,
+      totalArea: 200,
+      likesCount: 0,
+      user: mockUser._id,
+      imageUrl: '/uploads/house1.jpg'
+    }
+  ];
+
+  await Post.insertMany(mockPosts);
+  console.log('Mock posts created');
 }
 
 app.use(express.json());

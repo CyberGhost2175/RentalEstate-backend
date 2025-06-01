@@ -20,10 +20,10 @@ export const postCreateValidation = [
     body('imageUrl', 'Неверная ссылка на изображение').optional().isString(),
     body('typeOfPost', 'указан неверный тип обьявления').optional().isString(),
     body('typeOfProperty', 'указан неверный тип собственности').optional().isString(),
-    body('totalArea', 'указана неверная площадь').optional().isInt(),
-    body('countOfRooms', 'указано неверное кол-во комнат').optional().isInt(),
-    body('price', 'указана неверное цена').optional().isInt(),
-    body('yearOfConstruction', 'указан неверный год постройки').optional().isInt(),
+    body('totalArea', 'указана неверная площадь').optional().isNumeric(),
+    body('countOfRooms', 'указано неверное кол-во комнат').optional().isNumeric(),
+    body('price', 'указана неверное цена').optional().isNumeric(),
+    body('yearOfConstruction', 'указан неверный год постройки').optional().isNumeric(),
 
 
 

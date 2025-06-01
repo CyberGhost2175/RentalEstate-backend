@@ -1,0 +1,78 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'RentalEstate-backend/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'RentalEstate-backend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      NODE_ENV: test
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        cd RentalEstate-backend
+        npm ci
+        
+    - name: Run tests
+      run: |
+        cd RentalEstate-backend
+        npm test
+        
+    - name: Run linting
+      run: |
+        cd RentalEstate-backend
+        npm run lint
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      NODE_ENV: production
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        cd RentalEstate-backend
+        npm ci
+        
+    - name: Deploy to production
+      run: |
+        cd RentalEstate-backend
+        npm run build
+        # Add your deployment commands here
+        # For example, if using Heroku:
+        # git push heroku main
+        # Or if using AWS:
+        # aws deploy create-deployment --application-name your-app --deployment-group-name your-group --revision '{"revisionType": "GitHub", "gitHubLocation": {"repository": "CyberGhost2175/RentalEstate-backend", "commitId": "${{ github.sha }}"}}' 
