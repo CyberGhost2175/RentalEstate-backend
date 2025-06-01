@@ -22,8 +22,8 @@ mongoose
   .catch((err) => console.log('DB error', err));
 
 const app = express();
+import * as client from 'prom-client';
 
-const client = require('prom-client');
 const collectDefaultMetrics = client.collectDefaultMetrics;
 collectDefaultMetrics(); // CPU, память, uptime и др.
 
