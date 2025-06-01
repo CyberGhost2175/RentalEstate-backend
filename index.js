@@ -216,7 +216,7 @@ app.patch('/users/me', checkAuth, async (req, res) => {
   }
 });
 
-
+//comment for check
 
 app.post('/send-registration-email', async (req, res) => {
   const { email } = req.body;
