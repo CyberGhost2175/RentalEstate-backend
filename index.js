@@ -15,7 +15,7 @@ import { UserController, PostController } from './controllers/index.js';
 import User from "./models/User.js";
 import Post from "./models/Post.js";
 import {sendRegistrationEmail} from "./mailer.js";
-
+//коментарий для проверки
 mongoose
   .connect(process.env.DB_URL)
   .then(() => console.log('DB ok'))
